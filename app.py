@@ -12,7 +12,8 @@ load_dotenv()
 
 openweather_key = os.environ["openweather_key"]
 
-def create_array():
+
+def sheets_array():
     """
     Scans the specified Google Sheet to create an array of all logged plants.
     """
@@ -26,24 +27,39 @@ def create_array():
     sheet = client.open("Keep my plants alive!").sheet1
 
     # Extract and print all of the values
-    list_of_hashes = sheet.get_all_records()
-    return list
-    pp.pprint(list_of_hashes)
+    google_sheet_contents = sheet.get_all_records()
+    return google_sheet_contents
+    #pp.pprint(list_of_hashes)
 
 def get_forecast():
     """
     Pull 7 day forecast. 
     URL is hardcoded to US only. Updates can be made to include external countries if needed.
     """
-    url = "http://api.openweathermap.org/data/2.5/forecast?id=524901&appid=" + openweather_key
-    # http://api.openweathermap.org/data/2.5/forecast?zip={zip code},{country code}&appid={API key}
+    # Creates a unique list of zip codes from google_sheet_contents
+    google_sheet_contents = sheets_array()
+    zipcodes = []
+    for i in google_sheet_contents:
+        if i['Zip Code'] in zipcodes:
+            continue
+        else:
+            zipcodes.append(i['Zip Code'])
+    #print(zipcodes)
 
-    response = requests.get(url)
+    # Gather temp_min for next 7 days in reported zip codes
+    forecast = []
+    for i in zipcodes:
+        url = f"http://api.openweathermap.org/data/2.5/forecast?zip={i},us&cnt=7&units=imperial&appid={openweather_key}"
+        response = requests.get(url)
+        forecast.append(response.json())
+    #pp.pprint(forecast)
 
-    pp.pprint(response.json())
+    for city in forecast:
+        print(f"City: {city['city']['name']}")
+        for day in city['list']:
+            print(f"Date: {day['dt_txt']} with min temp of: {day['main']['temp_min']}")
 
-create_array()
-#get_forecast()
+get_forecast()
 
 
 """
