@@ -1,7 +1,7 @@
-import gspread
-import requests
 import os
 import pprint
+import gspread
+import requests
 import datetime
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -12,6 +12,18 @@ from dotenv import load_dotenv
 load_dotenv()
 
 openweather_key = os.environ["openweather_key"]
+
+#class that I cannot get to work without overwiting plant info.
+class PlantCollection:
+    """
+    Models a plant owner's email, zip code and plant collection.
+    """
+    def __init__(self,email,zip_code):
+        self.email = email
+        self.zip_code = zip_code
+
+    def description(self):
+        print(f"User: {self.email} Zip: {self.zip_code}")    
 
 
 def sheets_array():
@@ -29,7 +41,8 @@ def sheets_array():
 
     # Extract and print all of the values
     google_sheet_contents = sheet.get_all_records()
-    pp.pprint(google_sheet_contents)
+
+    #pp.pprint(google_sheet_contents)
     return google_sheet_contents
 
 def get_forecast():
@@ -59,10 +72,56 @@ def get_forecast():
         for day in city['list']:
             # Clean up variables
             timestamp = datetime.datetime.fromtimestamp(day['dt'])
-            print(f"Date: {timestamp.strftime('%Y-%m-%d %H:%M:%S')} with min temp of: {day['temp']['min']}")
+            print(f"Date: {timestamp.strftime('%Y-%m-%d')} with min temp of: {day['temp']['min']}")
 
-get_forecast()
 
+"""
+Lines below this have just been setup for testing. Once I get them cleaned up, they should be moved into the appropriate function or class above.
+"""
+
+# Gets current Google Sheet contents
+google_sheet_contents = sheets_array()
+emails = []
+
+for i in google_sheet_contents:
+    if i['Email Address'] in emails:
+        continue
+    else:
+        emails.append(i['Email Address'])
+        i = PlantCollection(i['Email Address'], i['Zip Code'])
+        i.description()
+
+
+plant_freeze = {}
+for i in google_sheet_contents:
+    name = i['Plant Name']
+    freeze_temp = i['Lowest temp (F°) to survive']
+    plant_freeze.update({name:freeze_temp})
+    
+#print(plant_freeze)
+
+# testing dictionary as a thought to ditch creating a class. However when an email address has multiple plants to account for, the plants are overwritten leaving only one in the dictionary.
+dict = {}
+for i in google_sheet_contents:
+    email = i['Email Address']
+    freeze_temp = i['Lowest temp (F°) to survive']
+    plant_name = i['Plant Name']
+    zip = i['Zip Code']
+
+    if i['Plant Name'] in dict:
+        continue
+    if i['Plant Name'] not in dict:
+        dict[email]={'Zip Code':zip,plant_name:freeze_temp}
+
+pp.pprint(google_sheet_contents)
+print("***Dictionary***")
+pp.pprint(dict)
+
+
+
+#pp.pprint(google_sheet_contents)
+#get_forecast()
+sheets_array()
 
 """
 PSEUDO CODE
