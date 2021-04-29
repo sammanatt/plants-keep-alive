@@ -50,19 +50,16 @@ def get_forecast():
     # Gather temp_min for next 7 days in reported zip codes
     forecast = []
     for i in zipcodes:
-        url = f"http://api.openweathermap.org/data/2.5/forecast?zip={i},us&cnt=7&units=imperial&appid={openweather_key}"
+        url = f"http://api.openweathermap.org/data/2.5/forecast/daily?zip={i},us&units=imperial&appid={openweather_key}"
         response = requests.get(url)
         forecast.append(response.json())
-    pp.pprint(forecast)
 
     for city in forecast:
         print(f"City: {city['city']['name']}")
         for day in city['list']:
             # Clean up variables
-            date = day['dt']
-            dates = datetime.date()
-            date_converted = dates.strftime("%Y-%m-%dT%H:%M:%S")
-            print(f"Date: {date_converted} with min temp of: {day['main']['temp_min']}")
+            timestamp = datetime.datetime.fromtimestamp(day['dt'])
+            print(f"Date: {timestamp.strftime('%Y-%m-%d %H:%M:%S')} with min temp of: {day['temp']['min']}")
 
 get_forecast()
 
