@@ -2,6 +2,7 @@ import gspread
 import requests
 import os
 import pprint
+import datetime
 from oauth2client.service_account import ServiceAccountCredentials
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -28,8 +29,8 @@ def sheets_array():
 
     # Extract and print all of the values
     google_sheet_contents = sheet.get_all_records()
+    pp.pprint(google_sheet_contents)
     return google_sheet_contents
-    #pp.pprint(list_of_hashes)
 
 def get_forecast():
     """
@@ -52,12 +53,16 @@ def get_forecast():
         url = f"http://api.openweathermap.org/data/2.5/forecast?zip={i},us&cnt=7&units=imperial&appid={openweather_key}"
         response = requests.get(url)
         forecast.append(response.json())
-    #pp.pprint(forecast)
+    pp.pprint(forecast)
 
     for city in forecast:
         print(f"City: {city['city']['name']}")
         for day in city['list']:
-            print(f"Date: {day['dt_txt']} with min temp of: {day['main']['temp_min']}")
+            # Clean up variables
+            date = day['dt']
+            dates = datetime.date()
+            date_converted = dates.strftime("%Y-%m-%dT%H:%M:%S")
+            print(f"Date: {date_converted} with min temp of: {day['main']['temp_min']}")
 
 get_forecast()
 
