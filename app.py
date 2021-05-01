@@ -18,12 +18,19 @@ class PlantCollection:
     """
     Models a plant owner's email, zip code and plant collection.
     """
-    def __init__(self,email,zip_code):
+    def __init__(self,email,zip_code,plants={}):
         self.email = email
         self.zip_code = zip_code
+        self.plants = {}
 
     def description(self):
-        print(f"User: {self.email} Zip: {self.zip_code}")    
+        print(f"User: {self.email} Zip: {self.zip_code} Plants: {self.plants}")    
+
+    def add_plants(self):
+        self.plants.update({name:freeze_temp})
+
+
+
 
 
 def sheets_array():
@@ -84,11 +91,13 @@ google_sheet_contents = sheets_array()
 emails = []
 
 for i in google_sheet_contents:
-    if i['Email Address'] in emails:
+    if i in emails:
         continue
     else:
-        emails.append(i['Email Address'])
+        name = i['Plant Name']
+        freeze_temp = i['Lowest temp (F°) to survive']
         i = PlantCollection(i['Email Address'], i['Zip Code'])
+        i.add_plants()
         i.description()
 
 
@@ -97,7 +106,8 @@ for i in google_sheet_contents:
     name = i['Plant Name']
     freeze_temp = i['Lowest temp (F°) to survive']
     plant_freeze.update({name:freeze_temp})
-    
+
+#print("Plant freeze")    
 #print(plant_freeze)
 
 # testing dictionary as a thought to ditch creating a class. However when an email address has multiple plants to account for, the plants are overwritten leaving only one in the dictionary.
@@ -114,8 +124,8 @@ for i in google_sheet_contents:
         dict[email]={'Zip Code':zip,plant_name:freeze_temp}
 
 pp.pprint(google_sheet_contents)
-print("***Dictionary***")
-pp.pprint(dict)
+#print("***Dictionary***")
+#pp.pprint(dict)
 
 
 
