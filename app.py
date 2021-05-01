@@ -87,21 +87,23 @@ Lines below this have just been setup for testing. Once I get them cleaned up, t
 google_sheet_contents = sheets_array()
 #pp.pprint(google_sheet_contents)
 
-# Collect a unique list of email addresses
-emails = []
+# Collect a unique dictionary of email addresses (keys) and zip codes (values)
+user_info = {}
 
 for i in google_sheet_contents:
-    if i['Email Address'] in emails:
+    if i['Email Address'] in user_info:
         continue
     else:
-        emails.append(i['Email Address'])
+        email = i['Email Address']
+        zipcode = i['Zip Code']
+        user_info.update({email:zipcode})
 
 # Loops through all unique emails looking for plant ownership
-for email in emails:
+for email,zipcode in user_info.items():
     plants = []
     #print(f"Working on {email}")
     # Instantiates class
-    plant_class = PlantCollection(email, i['Zip Code']) #!!! Zipcode variable needs to get fixed
+    plant_class = PlantCollection(email,zipcode) #!!! Zipcode variable needs to get fixed
 
     for i in google_sheet_contents:
         # Preparing variables and list
