@@ -97,52 +97,23 @@ for i in google_sheet_contents:
         emails.append(i['Email Address'])
 
 # Loops through all unique emails looking for plant ownership
-for i in emails:
-    print(f"Working on {i}")
+for email in emails:
+    plants = []
+    #print(f"Working on {email}")
+    # Instantiates class
+    plant_class = PlantCollection(email, i['Zip Code']) #!!! Zipcode variable needs to get fixed
+
     for i in google_sheet_contents:
         # Preparing variables and list
-        plants = []
         plant_name = i['Plant Name']
         freeze_temp = i['Lowest temp (F°) to survive']
-        email = i['Email Address']
-        zip_code = i['Zip Code']
-
-        # Instantiates class
-        plant_class = PlantCollection(i['Email Address'], i['Zip Code'])
-
-        if i['Plant Name'] in plants:
+        
+        if i['Email Address'] == email and plant_name in plants:
             continue
-        else:
+        elif i['Email Address'] == email and plant_name not in plants:
             plant_class.add_plants()
-
-        plant_class.description()
-
-
-plant_freeze = {}
-for i in google_sheet_contents:
-    name = i['Plant Name']
-    freeze_temp = i['Lowest temp (F°) to survive']
-    plant_freeze.update({name:freeze_temp})
-
-#print("Plant freeze")    
-#print(plant_freeze)
-
-# testing dictionary as a thought to ditch creating a class. However when an email address has multiple plants to account for, the plants are overwritten leaving only one in the dictionary.
-dict = {}
-for i in google_sheet_contents:
-    email = i['Email Address']
-    freeze_temp = i['Lowest temp (F°) to survive']
-    plant_name = i['Plant Name']
-    zip = i['Zip Code']
-
-    if i['Plant Name'] in dict:
-        continue
-    if i['Plant Name'] not in dict:
-        dict[email]={'Zip Code':zip,plant_name:freeze_temp}
-
-#print("***Dictionary***")
-#pp.pprint(dict)
-
+        plants.append(plant_name)
+    plant_class.description()
 
 
 #pp.pprint(google_sheet_contents)
