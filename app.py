@@ -27,10 +27,7 @@ class PlantCollection:
         print(f"User: {self.email} Zip: {self.zip_code} Plants: {self.plants}")    
 
     def add_plants(self):
-        self.plants.update({name:freeze_temp})
-
-
-
+        self.plants.update({plant_name:freeze_temp})
 
 
 def sheets_array():
@@ -88,17 +85,37 @@ Lines below this have just been setup for testing. Once I get them cleaned up, t
 
 # Gets current Google Sheet contents
 google_sheet_contents = sheets_array()
+#pp.pprint(google_sheet_contents)
+
+# Collect a unique list of email addresses
 emails = []
 
 for i in google_sheet_contents:
-    if i in emails:
+    if i['Email Address'] in emails:
         continue
     else:
-        name = i['Plant Name']
+        emails.append(i['Email Address'])
+
+# Loops through all unique emails looking for plant ownership
+for i in emails:
+    print(f"Working on {i}")
+    for i in google_sheet_contents:
+        # Preparing variables and list
+        plants = []
+        plant_name = i['Plant Name']
         freeze_temp = i['Lowest temp (F°) to survive']
-        i = PlantCollection(i['Email Address'], i['Zip Code'])
-        i.add_plants()
-        i.description()
+        email = i['Email Address']
+        zip_code = i['Zip Code']
+
+        # Instantiates class
+        plant_class = PlantCollection(i['Email Address'], i['Zip Code'])
+
+        if i['Plant Name'] in plants:
+            continue
+        else:
+            plant_class.add_plants()
+
+        plant_class.description()
 
 
 plant_freeze = {}
@@ -123,7 +140,6 @@ for i in google_sheet_contents:
     if i['Plant Name'] not in dict:
         dict[email]={'Zip Code':zip,plant_name:freeze_temp}
 
-pp.pprint(google_sheet_contents)
 #print("***Dictionary***")
 #pp.pprint(dict)
 
