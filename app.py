@@ -102,7 +102,6 @@ for i in google_sheet_contents:
 
 # Loops through all unique emails looking for plant ownership
 for email,zipcode in user_info.items():
-    plants = []
     #print(f"Working on {email}")
     # Instantiates class
     plant_class = PlantCollection(email,zipcode) #!!! Zipcode variable needs to get fixed
@@ -111,6 +110,7 @@ for email,zipcode in user_info.items():
         # Preparing variables and list
         plant_name = i['Plant Name']
         freeze_temp = i['Lowest temp (F°) to survive']
+        plants = []
         
         if i['Email Address'] == email and plant_name in plants:
             continue
@@ -120,9 +120,6 @@ for email,zipcode in user_info.items():
     plant_class.description()
 
 
-#pp.pprint(google_sheet_contents)
-#get_forecast()
-sheets_array()
 
 """
 PSEUDO CODE
