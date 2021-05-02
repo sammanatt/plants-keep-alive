@@ -24,7 +24,9 @@ class PlantCollection:
         self.plants = {}
 
     def description(self):
-        print(f"User: {self.email} Zip: {self.zip_code} Plants: {self.plants}")    
+        print(f"User {self.email} at {self.zip_code} has {len(self.plants)} plants:")
+        for plant in sorted (self.plants.keys()):
+            print(f"    {plant}")    
 
     def add_plants(self):
         self.plants.update({plant_name:freeze_temp})
