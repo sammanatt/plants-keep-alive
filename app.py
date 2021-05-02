@@ -13,7 +13,6 @@ load_dotenv()
 
 openweather_key = os.environ["openweather_key"]
 
-#class that I cannot get to work without overwiting plant info.
 class PlantCollection:
     """
     Models a plant owner's email, zip code and plant collection.
@@ -25,6 +24,9 @@ class PlantCollection:
         self.forecast = []
 
     def description(self):
+        """
+        Prints description of instantiated class in cli.
+        """
         print("####################")
         print(f"User {self.email} at {self.zip_code} has {len(self.plants)} plants:")
         for plant in sorted (self.plants.keys()):
@@ -34,11 +36,14 @@ class PlantCollection:
 
     def add_plants(self):
         """
-        Creates dictionary containing the user's plant collection
+        Updates dictionary with the user's plant collection
         """
         self.plants.update({plant_name:freeze_temp})
     
     def get_forecast(self):
+        """
+        Pulls 7 day forecast for the user's zipcode.
+        """
         url = f"http://api.openweathermap.org/data/2.5/forecast/daily?zip={self.zip_code},us&units=imperial&appid={openweather_key}"
         response = requests.get(url)
         results = response.json()
@@ -52,7 +57,7 @@ class PlantCollection:
 
 def sheets_array():
     """
-    Scans the specified Google Sheet to create an array of all logged plants.
+    Scans the specified Google Sheet to gather all information needed for the PlantCollection class.
     """
     # use creds to create a client to interact with the Google Drive API
     scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
@@ -69,42 +74,9 @@ def sheets_array():
     #pp.pprint(google_sheet_contents)
     return google_sheet_contents
 
-def get_forecast():
-    """
-    Pull 7 day forecast. 
-    URL is hardcoded to US only. Updates can be made to include external countries if needed.
-    """
-    # Creates a unique list of zip codes from google_sheet_contents
-    google_sheet_contents = sheets_array()
-    zipcodes = []
-    for i in google_sheet_contents:
-        if i['Zip Code'] in zipcodes:
-            continue
-        else:
-            zipcodes.append(i['Zip Code'])
-
-    # Gather temp_min for next 7 days in reported zip codes
-    forecast = []
-    for i in zipcodes:
-        url = f"http://api.openweathermap.org/data/2.5/forecast/daily?zip={i},us&units=imperial&appid={openweather_key}"
-        response = requests.get(url)
-        forecast.append(response.json())
-
-    for city in forecast:
-        print(f"City: {city['city']['name']}")
-        for day in city['list']:
-            # Clean up variables
-            timestamp = datetime.datetime.fromtimestamp(day['dt'])
-            print(f"Date: {timestamp.strftime('%Y-%m-%d')} with min temp of: {day['temp']['min']}")
-
-
-"""
-Lines below this have just been setup for testing. Once I get them cleaned up, they should be moved into the appropriate function or class above.
-"""
 
 # Gets current Google Sheet contents
 google_sheet_contents = sheets_array()
-#pp.pprint(google_sheet_contents)
 
 # Collect a unique dictionary of email addresses (keys) and zip codes (values)
 user_info = {}
@@ -119,10 +91,10 @@ for i in google_sheet_contents:
 
 # Loops through all unique emails looking for plant ownership
 for email,zipcode in user_info.items():
-    #print(f"Working on {email}")
     # Instantiates class
-    plant_class = PlantCollection(email,zipcode) #!!! Zipcode variable needs to get fixed
+    plant_class = PlantCollection(email,zipcode)
 
+    # Adds user's plant collection to instantiated class.
     for i in google_sheet_contents:
         # Preparing variables and list
         plant_name = i['Plant Name']
@@ -134,6 +106,8 @@ for email,zipcode in user_info.items():
         elif i['Email Address'] == email and plant_name not in plants:
             plant_class.add_plants()
         plants.append(plant_name)
+    
+    # Prints description to CLI for debugging/sanity check.
     plant_class.description()
 
 
