@@ -17,11 +17,11 @@ class PlantCollection:
     """
     Models a plant owner's email, zip code and plant collection.
     """
-    def __init__(self,email,zip_code, plants={},forecast=[]):
+    def __init__(self,email,zip_code, plants={},forecast={}):
         self.email = email
         self.zip_code = zip_code
         self.plants = {}
-        self.forecast = []
+        self.forecast = {}
 
     def description(self):
         """
@@ -48,11 +48,14 @@ class PlantCollection:
         response = requests.get(url)
         results = response.json()
         self.city = results['city']['name']
-        print(f"    {self.city}")
+        #print(f"    {self.city}")
 
         for day in results['list']:
             timestamp = datetime.datetime.fromtimestamp(day['dt'])
-            print(f"    Date: {timestamp.strftime('%Y-%m-%d')} with min temp of: {day['temp']['min']}")
+            timestamp_formatted = timestamp.strftime('%Y-%m-%d')
+            min_temp = day['temp']['min']
+            #print(f"    Date: {timestamp_formatted} with min temp of: {min_temp}")
+            self.forecast.update({timestamp_formatted:min_temp})
 
 
 def sheets_array():
@@ -106,9 +109,14 @@ for email,zipcode in user_info.items():
         elif i['Email Address'] == email and plant_name not in plants:
             plant_class.add_plants()
         plants.append(plant_name)
-    
+
+    # Looks for plants with a freeze_temp < a daily min
+    plant_class.get_forecast()
+    daily_mintemp = plant_class.forecast
+    for plant,freeze_temp in plant_class.plants.items():
+        print(f"freeze temp of {plant} is {freeze_temp}")
     # Prints description to CLI for debugging/sanity check.
-    plant_class.description()
+    #plant_class.description()
 
 
 """
