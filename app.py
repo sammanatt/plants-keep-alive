@@ -18,18 +18,36 @@ class PlantCollection:
     """
     Models a plant owner's email, zip code and plant collection.
     """
-    def __init__(self,email,zip_code,plants={}):
+    def __init__(self,email,zip_code, plants={},forecast=[]):
         self.email = email
         self.zip_code = zip_code
         self.plants = {}
+        self.forecast = []
 
     def description(self):
+        print("####################")
         print(f"User {self.email} at {self.zip_code} has {len(self.plants)} plants:")
         for plant in sorted (self.plants.keys()):
-            print(f"    {plant}")    
+            print(f"    {plant}")
+        print(f"    ===  7 Day Forecast===") #update with fstring to include city name
+        self.get_forecast()
 
     def add_plants(self):
+        """
+        Creates dictionary containing the user's plant collection
+        """
         self.plants.update({plant_name:freeze_temp})
+    
+    def get_forecast(self):
+        url = f"http://api.openweathermap.org/data/2.5/forecast/daily?zip={self.zip_code},us&units=imperial&appid={openweather_key}"
+        response = requests.get(url)
+        results = response.json()
+        self.city = results['city']['name']
+        print(f"    {self.city}")
+
+        for day in results['list']:
+            timestamp = datetime.datetime.fromtimestamp(day['dt'])
+            print(f"    Date: {timestamp.strftime('%Y-%m-%d')} with min temp of: {day['temp']['min']}")
 
 
 def sheets_array():
@@ -64,7 +82,6 @@ def get_forecast():
             continue
         else:
             zipcodes.append(i['Zip Code'])
-    #print(zipcodes)
 
     # Gather temp_min for next 7 days in reported zip codes
     forecast = []
@@ -118,7 +135,6 @@ for email,zipcode in user_info.items():
             plant_class.add_plants()
         plants.append(plant_name)
     plant_class.description()
-
 
 
 """
