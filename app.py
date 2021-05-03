@@ -31,8 +31,11 @@ class PlantCollection:
         print(f"User {self.email} at {self.zip_code} has {len(self.plants)} plants:")
         for plant in sorted (self.plants.keys()):
             print(f"    {plant}")
-        print(f"    ===  7 Day Forecast===") #update with fstring to include city name
+        
         self.get_forecast()
+        print(f"    ===  {self.city} 7 Day Forecast  ===") #update with fstring to include city name
+        for day,min_temp in self.forecast.items():
+            print(f"    {day} has a min temp of: {min_temp}F")
 
     def add_plants(self):
         """
@@ -48,14 +51,12 @@ class PlantCollection:
         response = requests.get(url)
         results = response.json()
         self.city = results['city']['name']
-        #print(f"    {self.city}")
 
         for day in results['list']:
             timestamp = datetime.datetime.fromtimestamp(day['dt'])
             timestamp_formatted = timestamp.strftime('%Y-%m-%d')
             min_temp = day['temp']['min']
-            #print(f"    Date: {timestamp_formatted} with min temp of: {min_temp}")
-            self.forecast.update({timestamp_formatted:min_temp})
+            self.forecast.update({timestamp_formatted:round(min_temp)})
 
 
 def sheets_array():
@@ -110,13 +111,18 @@ for email,zipcode in user_info.items():
             plant_class.add_plants()
         plants.append(plant_name)
 
+    plant_class.description()
+
+
     # Looks for plants with a freeze_temp < a daily min
-    plant_class.get_forecast()
+    """plant_class.get_forecast()
     daily_mintemp = plant_class.forecast
-    for plant,freeze_temp in plant_class.plants.items():
-        print(f"freeze temp of {plant} is {freeze_temp}")
-    # Prints description to CLI for debugging/sanity check.
-    #plant_class.description()
+    for day,min_temp in daily_mintemp.items():
+        #print(f"day {day} low: {min_temp}")
+        for plant,freeze_temp in plant_class.plants.items():
+            if freeze_temp > min_temp:
+                print(f"{plant} freeze temp is greater than today's low")
+            #print(f"freeze temp of {plant} is {freeze_temp}")"""
 
 
 """
