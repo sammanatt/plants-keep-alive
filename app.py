@@ -27,13 +27,13 @@ class PlantCollection:
         """
         Prints description of instantiated class in cli.
         """
-        print("####################")
+        print("########################################")
         print(f"User {self.email} at {self.zip_code} has {len(self.plants)} plants:")
         for plant in sorted (self.plants.keys()):
             print(f"    {plant}")
         
         self.get_forecast()
-        print(f"    ===  {self.city} 7 Day Forecast  ===") #update with fstring to include city name
+        print(f"    ===  {self.city} 7 Day Low Temp  ===") #update with fstring to include city name
         for day,min_temp in self.forecast.items():
             print(f"    {day} has a min temp of: {min_temp}F")
 
