@@ -111,19 +111,24 @@ for email,zipcode in user_info.items():
             plant_class.add_plants()
         plants.append(plant_name)
 
-    plant_class.description()
+    #plant_class.description()
 
     # Looks for plants with a freeze_temp < a daily min
     plant_class.get_forecast()
     daily_mintemp = plant_class.forecast
-    plants_at_risk = {}
     for day,min_temp in daily_mintemp.items():
+        print(f"Today is {day} with a low of {min_temp}")
+        plants_at_risk = {}
         for plant,freeze_temp in plant_class.plants.items():
-            if freeze_temp >= min_temp:
-                #print(f"{plant} freeze temp ({freeze_temp}) is greater than today's({day}) low ({min_temp})")
+            if freeze_temp >= 10: # change me back to min_temp when not debugging
                 plants_at_risk.update({day:plant})
+        if len(plants_at_risk) == 0:
+            print("    No plants at risk :)")
+        else:
+            print("    The following plants are at risk:")
+            for plant in plants_at_risk.values():
+                print(f"    - {plant}")
 
-    pp.pprint(plants_at_risk)        
 
 
 """
