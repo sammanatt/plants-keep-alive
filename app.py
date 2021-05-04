@@ -3,6 +3,7 @@ import pprint
 import gspread
 import requests
 import datetime
+
 from oauth2client.service_account import ServiceAccountCredentials
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -29,8 +30,8 @@ class PlantCollection:
         """
         print("########################################")
         print(f"User {self.email} at {self.zip_code} has {len(self.plants)} plants:")
-        for plant in sorted (self.plants.keys()):
-            print(f"    {plant}")
+        for plant,freeze_temp in sorted (self.plants.items()):
+            print(f"    {plant} (Damage at {freeze_temp}F)")
         
         self.get_forecast()
         print(f"    ===  {self.city} 7 Day Low Temp  ===") #update with fstring to include city name
@@ -113,16 +114,23 @@ for email,zipcode in user_info.items():
 
     plant_class.description()
 
-
     # Looks for plants with a freeze_temp < a daily min
-    """plant_class.get_forecast()
-    daily_mintemp = plant_class.forecast
+    plant_class.get_forecast()
+    daily_mintemp = plant_class.forecast        
+    print(f"    ===== Temp Check =====")
     for day,min_temp in daily_mintemp.items():
-        #print(f"day {day} low: {min_temp}")
+        plants_at_risk = []
+        print(f"        {day} has a low of {min_temp}")
         for plant,freeze_temp in plant_class.plants.items():
-            if freeze_temp > min_temp:
-                print(f"{plant} freeze temp is greater than today's low")
-            #print(f"freeze temp of {plant} is {freeze_temp}")"""
+            if freeze_temp >= min_temp:
+                plants_at_risk.append(plant)
+        if len(plants_at_risk) == 0:
+            print("            No plants are at risk!")
+        else: 
+            print("        The following plants are at risk:")
+            for plant in plants_at_risk:
+                print(f"            {plant}")
+                
 
 
 """
