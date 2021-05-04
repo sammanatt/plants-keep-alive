@@ -87,12 +87,13 @@ google_sheet_contents = sheets_array()
 user_info = {}
 
 for i in google_sheet_contents:
-    if i['Email Address'] in user_info:
+    if i['Email Address'] in user_info or bool(i['Email Address']) == False:
         continue
     else:
         email = i['Email Address']
         zipcode = i['Zip Code']
         user_info.update({email:zipcode})
+        
 
 # Loops through all unique emails looking for plant ownership
 for email,zipcode in user_info.items():
