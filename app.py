@@ -13,6 +13,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 openweather_key = os.environ["openweather_key"]
+mailgun_apikey = os.environ["mailgun_apikey"]
+domain = os.environ["domain"]
+from_address = os.environ["from_address"]
+
 
 class PlantCollection:
     """
@@ -79,6 +83,21 @@ def sheets_array():
     #pp.pprint(google_sheet_contents)
     return google_sheet_contents
 
+def send_email(to_address,body_message):
+    """
+    Send emails via Mailgun API.
+    """
+
+    message = requests.post(
+        "https://api.mailgun.net/v3/"+ domain + "/messages",
+        auth=("api", mailgun_apikey),
+        data={"from": from_address,
+              "to": to_address, 
+              "subject": "Weekly Plant Alert",
+              "text": body_message})
+    print(f"message: {message.text}\n"
+        f"status:{message.status_code}" )
+
 
 # Gets current Google Sheet contents
 google_sheet_contents = sheets_array()
@@ -118,21 +137,21 @@ for email,zipcode in user_info.items():
     # Looks for plants with a freeze_temp < a daily min
     plant_class.get_forecast()
     daily_mintemp = plant_class.forecast        
-    print(f"    ===== Temp Check =====")
+    email_body = "=== Weekly Plant Alert ===\n"
     for day,min_temp in daily_mintemp.items():
         plants_at_risk = []
-        print(f"        {day} has a low of {min_temp}")
+        email_body += f"\n{day} has a low of {min_temp}\n"
         for plant,freeze_temp in plant_class.plants.items():
             if freeze_temp >= min_temp:
                 plants_at_risk.append(plant)
         if len(plants_at_risk) == 0:
-            print("            No plants are at risk!")
+            email_body += "    No plants are at risk!\n"
         else: 
-            print("        The following plants are at risk:")
+            email_body += "    The following plants are at risk:\n"
             for plant in plants_at_risk:
-                print(f"            {plant}")
-                
-
+                email_body += f"        {plant}\n"
+    
+    send_email(plant_class.email,email_body)
 
 """
 PSEUDO CODE
