@@ -1,6 +1,6 @@
 # plants-keep-alive
 
-![https://giphy.com/gifs/death-die-plant-XSTtrAN0rJfy](tryingnottodie.gif)
+![https://giphy.com/gifs/death-die-plant-XSTtrAN0rJfy](https://github.com/sammanatt/plants-keep-alive/blob/email-alerts/tyringnottodie.gif)
 
 I decided to write this after losing a massive Basil plant last winter when our local temperatures dipped into the low 40's. I hope this helps save someone else's plants as well! At a high level, this script will: 
 
