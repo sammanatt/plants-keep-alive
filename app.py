@@ -14,7 +14,7 @@ load_dotenv()
 
 openweather_key = os.environ["openweather_key"]
 mailgun_apikey = os.environ["mailgun_apikey"]
-domain = os.environ["domain"]
+mailgun_base_url = os.environ["mailgun_base_url"]
 from_address = os.environ["from_address"]
 
 
@@ -89,7 +89,7 @@ def send_email(to_address,body_message):
     """
 
     message = requests.post(
-        "https://api.mailgun.net/v3/"+ domain + "/messages",
+        mailgun_base_url + "/messages",
         auth=("api", mailgun_apikey),
         data={"from": from_address,
               "to": to_address, 
