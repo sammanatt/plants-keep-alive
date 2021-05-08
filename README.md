@@ -1,5 +1,7 @@
 # plants-keep-alive
 
+![https://giphy.com/gifs/death-die-plant-XSTtrAN0rJfy](https://github.com/sammanatt/plants-keep-alive/blob/email-alerts/tyringnottodie.gif)
+
 I decided to write this after losing a massive Basil plant last winter when our local temperatures dipped into the low 40's. I hope this helps save someone else's plants as well! At a high level, this script will: 
 
 1. Read plant collection and user data from a Google Sheet
@@ -89,7 +91,7 @@ Rather than setting up an SMTP server, I opted to use Mailgun for this project t
 4. Under `API` choose `Select` and copy the `API key` and `API base URL` into the mailgun variables in your .env file.
 
 
-## Openweather
+## OpenWeather
 In order to gather local forecast data, this script leverages OpenWeather's API. This is a [free*](https://openweathermap.org/price) API with no ads. 
 
 1. [Sign in](https://home.openweathermap.org/users/sign_in) and/or [create](https://home.openweathermap.org/users/sign_up) an OpenWeather account
