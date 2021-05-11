@@ -149,26 +149,30 @@ for email,zipcode in user_info.items():
     plant_class.get_forecast()
     daily_mintemp = plant_class.forecast        
     email_body = "=== Weekly Plant Alert ===\n"
-    new_dict = {}
+    body_message = []
+    current_indice = 0 
     for day,min_temp in daily_mintemp.items():
         plants_at_risk = []
         email_body += f"\n{day} has a low of {min_temp}\n"
-        new_dict["Date"] = day
+        body_message.append({"date":day})
+        body_message[current_indice].update({"plants_at_risk": plants_at_risk})
+        current_indice += 1
         for plant,freeze_temp in plant_class.plants.items():
             if freeze_temp >= 10: 
                 plants_at_risk.append(plant)
         if len(plants_at_risk) == 0:
             email_body += "    No plants are at risk!\n"
-            plants_at_risk = False
-            new_dict["Dates"].update({"Plant_at_risk": plants_at_risk})
+            #plants_at_risk = False
+            plants_at_risk.append("No plants are at risk!")
         else: 
             email_body += "    The following plants are at risk:\n"
             for plant in plants_at_risk:
                 email_body += f"        {plant}\n"
-            new_dict["Dates"].update({"Plant_at_risk": plants_at_risk})
+                #plants_at_risk.append(plant)
+            #body_message["Dates"].append({"Plant_at_risk": plants_at_risk})
 
     # For loop for debugging
-    print(json.dumps(new_dict,indent=4))
+    print(json.dumps(body_message, indent=4))
     """
     for k,v in new_dict.items():
         print(f"Day is {k}")
@@ -179,7 +183,7 @@ for email,zipcode in user_info.items():
             for i in v:
                 print(f"        {i}")"""
     
-    send_templated_message(plant_class.email, new_dict)
+    send_templated_message(plant_class.email, body_message)
 
 """
 if __name__ == "__main__":
