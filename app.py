@@ -1,6 +1,8 @@
 import os
+import json
 import pprint
 import gspread
+import argparse
 import requests
 import datetime
 
@@ -85,7 +87,7 @@ def sheets_array():
 
 def send_email(to_address,body_message):
     """
-    Send emails via Mailgun API.
+    Sends a plain-text email via Mailgun API.
     """
 
     message = requests.post(
@@ -99,20 +101,29 @@ def send_email(to_address,body_message):
         f"status:{message.status_code}" )
 
 
+def send_templated_message(to_address, body_message):
+    return requests.post(
+        mailgun_base_url + "/messages",
+        auth=("api", mailgun_apikey),
+        data={"from": from_address,
+              "to": to_address,
+              "subject": "Weekly Plant Alert",
+              "template": "plantskeepalive",
+              "h:X-Mailgun-Variables": json.dumps({"title": "API documentation", "body": body_message})})
+
+
 # Gets current Google Sheet contents
 google_sheet_contents = sheets_array()
 
 # Collect a unique dictionary of email addresses (keys) and zip codes (values)
 user_info = {}
-
 for i in google_sheet_contents:
     if i['Email Address'] in user_info or bool(i['Email Address']) == False:
         continue
     else:
         email = i['Email Address']
         zipcode = i['Zip Code']
-        user_info.update({email:zipcode})
-        
+        user_info.update({email:zipcode})            
 
 # Loops through all unique emails looking for plant ownership
 for email,zipcode in user_info.items():
@@ -138,28 +149,63 @@ for email,zipcode in user_info.items():
     plant_class.get_forecast()
     daily_mintemp = plant_class.forecast        
     email_body = "=== Weekly Plant Alert ===\n"
+    new_dict = {}
     for day,min_temp in daily_mintemp.items():
         plants_at_risk = []
         email_body += f"\n{day} has a low of {min_temp}\n"
+        new_dict["Date"] = day
         for plant,freeze_temp in plant_class.plants.items():
-            if freeze_temp >= min_temp:
+            if freeze_temp >= 10: 
                 plants_at_risk.append(plant)
         if len(plants_at_risk) == 0:
             email_body += "    No plants are at risk!\n"
+            plants_at_risk = False
+            new_dict["Dates"].update({"Plant_at_risk": plants_at_risk})
         else: 
             email_body += "    The following plants are at risk:\n"
             for plant in plants_at_risk:
                 email_body += f"        {plant}\n"
+            new_dict["Dates"].update({"Plant_at_risk": plants_at_risk})
+
+    # For loop for debugging
+    print(json.dumps(new_dict,indent=4))
+    """
+    for k,v in new_dict.items():
+        print(f"Day is {k}")
+        if bool(v) == False:
+            print("    No plants are at risk!")
+        else:
+            print("    The followoing plants are at risk")
+            for i in v:
+                print(f"        {i}")"""
     
-    send_email(plant_class.email,email_body)
+    send_templated_message(plant_class.email, new_dict)
 
 """
-PSEUDO CODE
----
-1. Scan Google Sheet for plants and store array
-2. Scan OpenWeather for 7 day forecast and log daily min temps
-3. Filter array for any plant hadiness < min temps
-4. Prep email payload (1 email per user)
-5. Send email to each user with at risk plants notifying them of which plants to pull in and when.
+if __name__ == "__main__":
+    # Build argument parser
+    parser = argparse.ArgumentParser(description='Send communcations to multiple customers via email.')
+    parser.add_argument('-u',
+                        '--user',
+                        default=None,
+                        help="Discogs user to import from.",
+                        action='store_true')
+    args = parser.parse_args()
+
+    #if args.user is None:
+    #    args.user = discogs_username
+    main(args)
+"""
+
 
 """
+=== To Do ===
+1. Add Debugger option to:
+    a. Only email admin email
+    b. Add optional argument to hard code min_temp
+2. Add argument to specify if templatized emails will be used (default to plain text)
+3. Test and fine-tune formatted emails using new_dict
+4. Refactor plain text emails to use json in new_dict
+"""
+
+
