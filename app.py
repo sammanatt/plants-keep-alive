@@ -158,7 +158,7 @@ for email,zipcode in user_info.items():
         body_message[current_indice].update({"plants_at_risk": plants_at_risk})
         current_indice += 1
         for plant,freeze_temp in plant_class.plants.items():
-            if freeze_temp >= 10: 
+            if freeze_temp >= min_temp: 
                 plants_at_risk.append(plant)
         if len(plants_at_risk) == 0:
             email_body += "    No plants are at risk!\n"
