@@ -48,6 +48,17 @@ class PlantCollection:
         """
         Updates dictionary with the user's plant collection
         """
+        for i in google_sheet_contents:
+            # Preparing variables and list
+            plant_name = i['Plant Name']
+            freeze_temp = i['Lowest temp (F°) to survive']
+            plants = []
+            
+            if i['Email Address'] == self.email and plant_name in plants:
+                continue
+            elif i['Email Address'] == self.email and plant_name not in plants:
+                self.plants.update({plant_name:freeze_temp})
+
         self.plants.update({plant_name:freeze_temp})
     
     def get_forecast(self):
@@ -123,83 +134,70 @@ for i in google_sheet_contents:
     else:
         email = i['Email Address']
         zipcode = i['Zip Code']
-        user_info.update({email:zipcode})            
+        user_info.update({email: zipcode})
 
-# Loops through all unique emails looking for plant ownership
-for email,zipcode in user_info.items():
-    # Instantiates class
-    plant_class = PlantCollection(email,zipcode)
+def main(args):
+    # Loops through all unique emails looking for plant ownership
+    for email,zipcode in user_info.items():
+        # Instantiates class
+        plant_class = PlantCollection(email,zipcode)
+        # Adds user's plant collection to instantiated class.
+        plant_class.add_plants()
+        # Prints class description to cli for visual confirmation
+        #plant_class.description()
 
-    # Adds user's plant collection to instantiated class.
-    for i in google_sheet_contents:
-        # Preparing variables and list
-        plant_name = i['Plant Name']
-        freeze_temp = i['Lowest temp (F°) to survive']
-        plants = []
-        
-        if i['Email Address'] == email and plant_name in plants:
-            continue
-        elif i['Email Address'] == email and plant_name not in plants:
-            plant_class.add_plants()
-        plants.append(plant_name)
+        # Looks for plants with a freeze_temp < a daily min
+        plant_class.get_forecast()
+        daily_mintemp = plant_class.forecast        
+        email_body = "=== Weekly Plant Alert ===\n"
+        body_message = []
+        current_indice = 0 
+        for day,min_temp in daily_mintemp.items():
+            plants_at_risk = []
+            if args.temperature is True:
+                min_temp = args.temperature
+            email_body += f"\n{day} has a low of {min_temp}\n"
+            body_message.append({"date":day})
+            body_message[current_indice].update({"plants_at_risk": plants_at_risk})
+            current_indice += 1
+            for plant,freeze_temp in plant_class.plants.items():
+                if freeze_temp >= min_temp: 
+                    plants_at_risk.append(plant)
+                    print(f" DEBUG *** plant is {plant} -- min_temp is {min_temp}")
+            if len(plants_at_risk) == 0:
+                email_body += "    No plants are at risk!\n"
+                plants_at_risk.append("No plants are at risk!")
+            else: 
+                email_body += "    The following plants are at risk:\n"
+                for plant in plants_at_risk:
+                    email_body += f"        {plant}\n"
 
-    plant_class.description()
+        print(email_body)
+        #send_templated_message(plant_class.email, body_message)
+        print(f"temp is hard set to {args.temperature} and bool is: {bool(args.temperature)}")
+        print(f"min_temp is {min_temp}")
 
-    # Looks for plants with a freeze_temp < a daily min
-    plant_class.get_forecast()
-    daily_mintemp = plant_class.forecast        
-    email_body = "=== Weekly Plant Alert ===\n"
-    body_message = []
-    current_indice = 0 
-    for day,min_temp in daily_mintemp.items():
-        plants_at_risk = []
-        email_body += f"\n{day} has a low of {min_temp}\n"
-        body_message.append({"date":day})
-        body_message[current_indice].update({"plants_at_risk": plants_at_risk})
-        current_indice += 1
-        for plant,freeze_temp in plant_class.plants.items():
-            if freeze_temp >= min_temp: 
-                plants_at_risk.append(plant)
-        if len(plants_at_risk) == 0:
-            email_body += "    No plants are at risk!\n"
-            #plants_at_risk = False
-            plants_at_risk.append("No plants are at risk!")
-        else: 
-            email_body += "    The following plants are at risk:\n"
-            for plant in plants_at_risk:
-                email_body += f"        {plant}\n"
-                #plants_at_risk.append(plant)
-            #body_message["Dates"].append({"Plant_at_risk": plants_at_risk})
 
-    # For loop for debugging
-    print(json.dumps(body_message, indent=4))
-    """
-    for k,v in new_dict.items():
-        print(f"Day is {k}")
-        if bool(v) == False:
-            print("    No plants are at risk!")
-        else:
-            print("    The followoing plants are at risk")
-            for i in v:
-                print(f"        {i}")"""
-    
-    send_templated_message(plant_class.email, body_message)
-
-"""
 if __name__ == "__main__":
     # Build argument parser
-    parser = argparse.ArgumentParser(description='Send communcations to multiple customers via email.')
-    parser.add_argument('-u',
-                        '--user',
+    parser = argparse.ArgumentParser(description='Send alerts to warn plant owners of damaging cold weather in upcoming 7 day forecast.')
+    parser.add_argument('-d',
+                        '--debug',
                         default=None,
-                        help="Discogs user to import from.",
+                        help="Only send emails to a specified email address.",
                         action='store_true')
+    parser.add_argument('-temp',
+                        '--temperature',
+                        default=None,
+                        help="Pass an integer with this argument to override the daily_min temperature.",
+                        type=int)
     args = parser.parse_args()
 
-    #if args.user is None:
-    #    args.user = discogs_username
+    if args.temperature is True:
+        args.temperature = min_temp
+
     main(args)
-"""
+
 
 
 """
