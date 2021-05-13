@@ -1,6 +1,8 @@
 import os
+import json
 import pprint
 import gspread
+import argparse
 import requests
 import datetime
 
@@ -46,6 +48,17 @@ class PlantCollection:
         """
         Updates dictionary with the user's plant collection
         """
+        for i in google_sheet_contents:
+            # Preparing variables and list
+            plant_name = i['Plant Name']
+            freeze_temp = i['Lowest temp (F°) to survive']
+            plants = []
+            
+            if i['Email Address'] == self.email and plant_name in plants:
+                continue
+            elif i['Email Address'] == self.email and plant_name not in plants:
+                self.plants.update({plant_name:freeze_temp})
+
         self.plants.update({plant_name:freeze_temp})
     
     def get_forecast(self):
@@ -85,7 +98,7 @@ def sheets_array():
 
 def send_email(to_address,body_message):
     """
-    Send emails via Mailgun API.
+    Sends a plain-text email via Mailgun API.
     """
 
     message = requests.post(
@@ -99,67 +112,106 @@ def send_email(to_address,body_message):
         f"status:{message.status_code}" )
 
 
+def send_templated_message(to_address, body_message):
+    return requests.post(
+        mailgun_base_url + "/messages",
+        auth=("api", mailgun_apikey),
+        data={"from": from_address,
+              "to": to_address,
+              "subject": "Weekly Plant Alert",
+              "template": "plantskeepalive",
+              "h:X-Mailgun-Variables": json.dumps({"title": "API documentation", "body": body_message})})
+
+
 # Gets current Google Sheet contents
 google_sheet_contents = sheets_array()
 
 # Collect a unique dictionary of email addresses (keys) and zip codes (values)
 user_info = {}
-
 for i in google_sheet_contents:
     if i['Email Address'] in user_info or bool(i['Email Address']) == False:
         continue
     else:
         email = i['Email Address']
         zipcode = i['Zip Code']
-        user_info.update({email:zipcode})
+        user_info.update({email: zipcode})
+
+def main(args):
+    # Loops through all unique emails looking for plant ownership
+    for email,zipcode in user_info.items():
+        # Instantiates class
+        plant_class = PlantCollection(email,zipcode)
+        # Adds user's plant collection to instantiated class.
+        plant_class.add_plants()
+        # Prints class description to cli for visual confirmation
+        plant_class.description()
+
+        # Looks for plants with a freeze_temp < a daily min
+        plant_class.get_forecast()
+        daily_mintemp = plant_class.forecast        
+        email_body = "=== Weekly Plant Alert ===\n"
+        body_message = []
+        current_indice = 0 
+        for day,min_temp in daily_mintemp.items():
+            plants_at_risk = []
+            if bool(args.temperature) is True:
+                min_temp = args.temperature
+            email_body += f"\n{day} has a low of {min_temp}\n"
+            body_message.append({"date":day})
+            body_message[current_indice].update({"plants_at_risk": plants_at_risk})
+            current_indice += 1
+            for plant,freeze_temp in plant_class.plants.items():
+                if freeze_temp >= min_temp: 
+                    plants_at_risk.append(plant)
+            if len(plants_at_risk) == 0:
+                email_body += "    No plants are at risk!\n"
+                plants_at_risk.append("No plants are at risk!")
+            else: 
+                email_body += "    The following plants are at risk:\n"
+                for plant in plants_at_risk:
+                    email_body += f"        {plant}\n"
+
         
+        print(args.template)
+        if bool(args.template) is True:
+            send_templated_message(plant_class.email, body_message)
+        else:
+            send_email(plant_class.email, email_body)
 
-# Loops through all unique emails looking for plant ownership
-for email,zipcode in user_info.items():
-    # Instantiates class
-    plant_class = PlantCollection(email,zipcode)
 
-    # Adds user's plant collection to instantiated class.
-    for i in google_sheet_contents:
-        # Preparing variables and list
-        plant_name = i['Plant Name']
-        freeze_temp = i['Lowest temp (F°) to survive']
-        plants = []
-        
-        if i['Email Address'] == email and plant_name in plants:
-            continue
-        elif i['Email Address'] == email and plant_name not in plants:
-            plant_class.add_plants()
-        plants.append(plant_name)
 
-    plant_class.description()
+if __name__ == "__main__":
+    # Build argument parser
+    parser = argparse.ArgumentParser(description='Send alerts to warn plant owners of damaging cold weather in upcoming 7 day forecast.')
+    parser.add_argument('-d',
+                        '--debug',
+                        default=None,
+                        help="Only send emails to a specified email address.",
+                        action='store_true')
+    parser.add_argument('-t',
+                        '--template',
+                        default=None,
+                        help="By default, this script will send a plain text email. If you've specified a Mailgun email template to use in .env. you can use this flag to send a formatted email.",
+                        action='store_true')
+    parser.add_argument('-temp',
+                        '--temperature',
+                        default=None,
+                        help="Pass an integer with this argument to override the daily_min temperature.",
+                        type=int)
+    args = parser.parse_args()
 
-    # Looks for plants with a freeze_temp < a daily min
-    plant_class.get_forecast()
-    daily_mintemp = plant_class.forecast        
-    email_body = "=== Weekly Plant Alert ===\n"
-    for day,min_temp in daily_mintemp.items():
-        plants_at_risk = []
-        email_body += f"\n{day} has a low of {min_temp}\n"
-        for plant,freeze_temp in plant_class.plants.items():
-            if freeze_temp >= min_temp:
-                plants_at_risk.append(plant)
-        if len(plants_at_risk) == 0:
-            email_body += "    No plants are at risk!\n"
-        else: 
-            email_body += "    The following plants are at risk:\n"
-            for plant in plants_at_risk:
-                email_body += f"        {plant}\n"
-    
-    send_email(plant_class.email,email_body)
+    main(args)
+
+
 
 """
-PSEUDO CODE
----
-1. Scan Google Sheet for plants and store array
-2. Scan OpenWeather for 7 day forecast and log daily min temps
-3. Filter array for any plant hadiness < min temps
-4. Prep email payload (1 email per user)
-5. Send email to each user with at risk plants notifying them of which plants to pull in and when.
-
+=== To Do ===
+1. Add Debugger option to:
+    a. Only email admin email
+    b. Add optional argument to hard code min_temp
+2. Add argument to specify if templatized emails will be used (default to plain text)
+3. Test and fine-tune formatted emails using new_dict
+4. Refactor plain text emails to use json in new_dict
 """
+
+
