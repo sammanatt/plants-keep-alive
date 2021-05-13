@@ -144,7 +144,7 @@ def main(args):
         # Adds user's plant collection to instantiated class.
         plant_class.add_plants()
         # Prints class description to cli for visual confirmation
-        #plant_class.description()
+        plant_class.description()
 
         # Looks for plants with a freeze_temp < a daily min
         plant_class.get_forecast()
@@ -154,7 +154,7 @@ def main(args):
         current_indice = 0 
         for day,min_temp in daily_mintemp.items():
             plants_at_risk = []
-            if args.temperature is True:
+            if bool(args.temperature) is True:
                 min_temp = args.temperature
             email_body += f"\n{day} has a low of {min_temp}\n"
             body_message.append({"date":day})
@@ -163,7 +163,6 @@ def main(args):
             for plant,freeze_temp in plant_class.plants.items():
                 if freeze_temp >= min_temp: 
                     plants_at_risk.append(plant)
-                    print(f" DEBUG *** plant is {plant} -- min_temp is {min_temp}")
             if len(plants_at_risk) == 0:
                 email_body += "    No plants are at risk!\n"
                 plants_at_risk.append("No plants are at risk!")
@@ -172,10 +171,7 @@ def main(args):
                 for plant in plants_at_risk:
                     email_body += f"        {plant}\n"
 
-        print(email_body)
         #send_templated_message(plant_class.email, body_message)
-        print(f"temp is hard set to {args.temperature} and bool is: {bool(args.temperature)}")
-        print(f"min_temp is {min_temp}")
 
 
 if __name__ == "__main__":
@@ -186,15 +182,17 @@ if __name__ == "__main__":
                         default=None,
                         help="Only send emails to a specified email address.",
                         action='store_true')
+    parser.add_argument('-t',
+                        '--template',
+                        default=None,
+                        help="By default, this script will send a plain text email. If you've specified a Mailgun email template to use in .env. you can use this flag to send a formatted email.",
+                        action='store_true')
     parser.add_argument('-temp',
                         '--temperature',
                         default=None,
                         help="Pass an integer with this argument to override the daily_min temperature.",
                         type=int)
     args = parser.parse_args()
-
-    if args.temperature is True:
-        args.temperature = min_temp
 
     main(args)
 
