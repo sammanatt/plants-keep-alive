@@ -171,7 +171,13 @@ def main(args):
                 for plant in plants_at_risk:
                     email_body += f"        {plant}\n"
 
-        #send_templated_message(plant_class.email, body_message)
+        
+        print(args.template)
+        if bool(args.template) is True:
+            send_templated_message(plant_class.email, body_message)
+        else:
+            send_email(plant_class.email, email_body)
+
 
 
 if __name__ == "__main__":
